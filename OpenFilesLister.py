@@ -15,8 +15,9 @@ class OpenFilesListerCommand(sublime_plugin.WindowCommand):
         self.untitled = self.get_setting("show_untitled_files")
 
         count = 0
-
-        for sheet in self.window.sheets():
+        active_group = self.window.active_group()
+        sheets = self.window.sheets_in_group(active_group)
+        for sheet in sheets:
             if sheet and sheet.view():
                 name = sheet.view().file_name()
                 if name != None:
