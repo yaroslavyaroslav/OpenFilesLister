@@ -2,7 +2,6 @@ import sublime_plugin
 import sublime
 import os
 
-# Created: 18-04-2018
 class OpenFilesListerCommand(sublime_plugin.WindowCommand):
     def run(self):
         self.window = sublime.active_window()
@@ -41,13 +40,12 @@ class OpenFilesListerCommand(sublime_plugin.WindowCommand):
             id = self.window.active_sheet().view().id()
 
         self.current = self.viewIds.index(id)
-        print (self.viewIds)
         self.window.run_command("hide_overlay")
 
         self.show_panel()
 
     def show_panel(self):
-        self.window.show_quick_panel(self.fileNames, self.on_done, selected_index=self.current, on_highlight=self.on_highlighted)
+        self.window.show_quick_panel(self.fileNames, self.on_done, flags=sublime.WANT_EVENT, selected_index=self.current, on_highlight=self.on_highlighted)
 
     def set_timeout(self):
         sublime.set_timeout_async(lambda: self.close_panel(), 1500)
@@ -55,13 +53,19 @@ class OpenFilesListerCommand(sublime_plugin.WindowCommand):
     def close_panel(self):
         self.window.run_command("hide_overlay")
 
-    def on_done(self, index):
+    def on_done(self, index, event):
         if index == -1:
             index = self.current
-        self.window.focus_view(self.sheets[index])
+        if event.get('modifier_keys', None).get('primary', False):
+            self.window.open_file(fname=self.sheets[self.current].file_name(), flags=sublime.REPLACE_MRU)
+            self.window.open_file(fname=self.sheets[index].file_name(), flags=sublime.ADD_TO_SELECTION | sublime.CLEAR_TO_RIGHT)
+        else:
+            self.window.open_file(fname=self.sheets[index].file_name())
+
 
     def on_highlighted(self, index):
-        self.window.focus_view(self.sheets[index])
+        self.window.open_file(fname=self.sheets[index].file_name(), flags=sublime.SEMI_TRANSIENT | sublime.REPLACE_MRU)
+
 
     def get_settings(self):
         return sublime.load_settings('OpenFilesLister.sublime-settings')
